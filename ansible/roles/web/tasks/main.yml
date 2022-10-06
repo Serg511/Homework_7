@@ -1,0 +1,106 @@
+- name: Install remirepo
+  yum:
+    name: http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+    state: present
+
+- name: Import remi GPG key.
+  rpm_key:
+    key: http://rpms.remirepo.net/RPM-GPG-KEY-remi
+    state: present
+
+- name: Enable php72 repo
+  ini_file:
+    dest: /etc/yum.repos.d/remi-php72.repo
+    section: remi-php72
+    option: enabled
+    value: 1
+
+- name: Download and Install MySQL repo
+  yum: name=https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm
+
+- name: Import GPG key
+  rpm_key:
+    key: https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+    state: present
+
+- name: Install packages for wordpress
+  yum: name={{ item }}
+  with_items:
+    - epel-release
+    - nginx
+    - wget
+    - php
+    - php-common
+    - php-opcache
+    - php-fpm
+    - php-mbstring
+    - php-curl
+    - php-mysql
+    - php-cli
+    - php-json
+    - php-xml
+    - php-gd
+    - php-xmlrpc
+    - php-soap
+    - php-intl
+    - php-zip
+    - php-ldap
+    - mysql
+    - mysql-router
+
+- name: Create a www-dir
+  file:
+    path: /mnt/gfs2/WP/wordpress
+    state: directory
+    owner: nginx
+    group: nginx
+    mode: 0775
+
+- name: Copy nginx.conf
+  ansible.builtin.copy:
+    src: nginx.conf
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Copy default.conf
+  ansible.builtin.copy:
+    src: default.conf
+    dest: /etc/nginx/conf.d/default.conf
+    owner: nginx
+    group: nginx
+    mode: '0644'
+
+- name: Copy www.conf
+  ansible.builtin.copy:
+    src: www.conf
+    dest: /etc/php-fpm.d/www.conf
+    owner: nginx
+    group: nginx
+    mode: '0644'
+
+- name: "Comment out the line"
+  replace:
+    path: /etc/php-fpm.d/www.conf
+    regexp: 'php_admin_value[error_log] = /var/log/php-fpm/www-error.log'
+    replace: ';php_admin_value[error_log] = /var/log/php-fpm/www-error.log'
+
+- name: "Comment out the line"
+  replace:
+    path: /etc/php-fpm.d/www.conf
+    regexp: 'php_admin_flag[log_errors] = on'
+    replace: ';php_admin_flag[log_errors] = on'
+
+- name: Configure SELinux 
+  become: true
+  shell: "{{ item }}"
+  with_items:
+    - "setenforce 1"
+    - "sed -i 's/^SELINUX=.*/SELINUX=enforcing/g' /etc/selinux/config"
+    - "setsebool -P httpd_can_network_connect 1"
+    - "semanage fcontext -a -t httpd_sys_rw_content_t '/mnt/gfs2/WP/wordpress(/.*)?'"
+    - "restorecon -Rv /mnt/gfs2/WP/wordpress"
+  notify:
+    - Restart nginx
+    - Restart php-fpm

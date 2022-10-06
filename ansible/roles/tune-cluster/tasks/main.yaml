@@ -1,0 +1,8 @@
+- name: Create resources
+  shell: "{{ item }}"
+  loop:
+    - " pcs resource create webserver ocf:heartbeat:nginx op monitor timeout='5s' interval='5s'"
+    - " pcs resource create php-fpm systemd:php-fpm.service op monitor timeout='5s' interval='5s'"
+    - " pcs constraint order set clusterfs-clone dlm-clone clvmd-clone php-fpm webserver"
+    - " pcs constraint location php-fpm  prefers web-0=30 web-1=20 web-2=10"
+    - " pcs constraint location webserver prefers web-0=30 web-1=20 web-2=10"

@@ -1,0 +1,32 @@
+- name: Install openjdk
+  yum:
+     name: java-1.8.0-openjdk
+     state: present
+
+- name: Unarchive kafka package
+  unarchive:
+      src: https://downloads.apache.org/kafka/3.2.3/kafka_2.13-3.2.3.tgz 
+      dest: /home/user
+      remote_src: yes
+
+- name: Copy zookeeper.service
+  copy:
+     src: zookeeper.service
+     dest: /etc/systemd/system/zookeeper.service
+
+- name: Copy kafka.service
+  copy:
+     src: kafka.service
+     dest: /etc/systemd/system/kafka.service
+
+- name: Start kafka and zokeeper
+  systemd: name={{ item }} enabled=yes state=started daemon_reload=yes
+  loop:
+    - zookeeper.service
+    - kafka.service
+
+- name: Create topics
+  shell: "{{ item }}"
+  loop:
+    - "/home/user/kafka_2.13-3.2.3/bin/kafka-topics.sh --create --topic nginx --partitions 2 --replication-factor 1 --bootstrap-server localhost:9092"
+    - "/home/user/kafka_2.13-3.2.3/bin/kafka-topics.sh --create --topic wordpress --partitions 2 --replication-factor 1 --bootstrap-server localhost:9092"

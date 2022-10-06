@@ -1,0 +1,39 @@
+- name: Download wordpress
+  get_url:
+    url: https://wordpress.org/latest.tar.gz
+    dest: /mnt/gfs2/WP/latest.tar.gz
+
+- name: Unzip wordpress
+  unarchive:
+    src: /mnt/gfs2/WP/latest.tar.gz
+    dest: /mnt/gfs2/WP/
+    remote_src: yes
+
+- name: Copy nginx and config  with owner and permissions
+  ansible.builtin.copy:
+    src: wp-config.php
+    dest: /mnt/gfs2/WP/wordpress/wp-config.php
+    owner: nginx
+    group: nginx
+    mode: '0644'
+
+- name: Change Ownership of wordpress files
+  file:
+    path: /mnt/gfs2/WP/wordpress
+    owner: nginx
+    mode: '0755'
+    state: directory
+    recurse: yes
+  notify:
+  - Restart nginx
+
+- name: Change Ownership of var lib php
+  file:
+    path: /mnt/gfs2/WP/wordpress
+    owner: nginx
+    group: nginx
+    mode: '0755'
+    state: directory
+    recurse: yes
+  notify:
+  - Restart php-fpm

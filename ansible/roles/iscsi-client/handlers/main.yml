@@ -1,0 +1,7 @@
+---
+- name: Start multipath
+  service:
+    name: "multipathd"
+    state: "started"
+    enabled: yes
+  become: true

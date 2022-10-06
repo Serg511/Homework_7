@@ -1,0 +1,15 @@
+- name: Install iscsi target
+  yum: name={{ item }}
+  with_items:
+    - targetcli
+
+- name: Configure target
+  ansible.builtin.shell: |
+     targetcli /backstores/block create disk01 /dev/vdb
+     targetcli /iscsi create iqn.2022-05.ru.otus:storage.target00
+     targetcli /iscsi/iqn.2022-05.ru.otus:storage.target00/tpg1/portals create 0.0.0.0
+     targetcli /iscsi/iqn.2022-05.ru.otus:storage.target00/tpg1/luns create /backstores/block/disk01 lun=1
+     targetcli /iscsi/iqn.2022-05.ru.otus:storage.target00/tpg1 set attribute authentication=0
+     targetcli /iscsi/iqn.2022-05.ru.otus:storage.target00/tpg1/acls create iqn.2022-05.ru.otus:web-0
+     targetcli /iscsi/iqn.2022-05.ru.otus:storage.target00/tpg1/acls create iqn.2022-05.ru.otus:web-1
+     targetcli /iscsi/iqn.2022-05.ru.otus:storage.target00/tpg1/acls create iqn.2022-05.ru.otus:web-2

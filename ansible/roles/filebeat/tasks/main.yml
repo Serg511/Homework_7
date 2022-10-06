@@ -1,0 +1,20 @@
+- name: Copy rpm file Filebeat to server
+  copy:
+     src: filebeat-8.4.0-x86_64.rpm
+     dest: /tmp/filebeat-8.4.0-x86_64.rpm
+
+- name: Install package Filebeat
+  yum:
+     name: /tmp/filebeat-8.4.0-x86_64.rpm
+     state: present
+
+- name: Copy config Filebeat
+  template:
+      src: filebeat.yml.j2
+      dest: /etc/filebeat/filebeat.yml
+
+- name: Start and enable Filebeat
+  systemd:
+      name: filebeat
+      state: started
+      enabled: yes

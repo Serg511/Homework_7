@@ -1,0 +1,4 @@
+pacemaker_hacluster_name: 'otusha'
+pacemaker_hacluster_user: 'hacluster'
+pacemaker_hacluster_password: 'haPASS1804'
+pacemaker_hacluster_sha: '$6$65ZVK3CdSgjLeHOF$vl3r.cjQukU..qQnU5BhIsDFwrCorxUvMY1A83dX8KriWjDqFBevxdmpaS0CjFUYqbesUvQ51SornyHmjppcA/'

@@ -1,0 +1,37 @@
+- name: Install pacemaker packages
+  yum: name={{ item }}
+  with_items:
+    - pacemaker
+    - pcs
+    - psmisc
+    - policycoreutils-python
+
+- name: Set authorized key took from file
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ lookup('file', 'id_rsa.pub') }}"
+
+- name: Copy the private_key
+  copy:
+    src: "id_rsa"
+    dest: /root/.ssh/id_rsa
+
+- name: Enable pcsd service
+  systemd:
+    name: pcsd
+    state: started
+    enabled: yes
+
+- name: Config | Setting hacluster password
+  user:
+    name:  "{{ pacemaker_hacluster_user }}"
+    password: "{{ pacemaker_hacluster_sha }}"
+  become: true
+
+- name: Pcs auth
+  shell: |
+    pcs cluster auth {{ groups['web_servers']|join(' ') }} -u {{ pacemaker_hacluster_user }} -p  {{ pacemaker_hacluster_password }}
+    pcs cluster setup --name {{ pacemaker_hacluster_name }} {{ groups['web_servers']|join(' ') }}
+    pcs cluster start --all
+

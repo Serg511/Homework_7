@@ -1,0 +1,6 @@
+- name: Start iscsi target
+  service:
+    name: "iscsi-target"
+    state: "started"
+    enabled: yes
+  become: true

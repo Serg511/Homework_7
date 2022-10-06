@@ -1,0 +1,30 @@
+- name: Install iscsi client and multipath
+  yum: name={{ item }}
+  with_items:
+    - iscsi-initiator-utils
+    - iscsi-initiator-utils-iscsiuio
+    - device-mapper-multipath
+    - gfs2-utils
+    - lvm2-cluster
+    - fence-agents-all
+
+- name: Set up multipath
+  command: mpathconf --enable --with_multipathd y
+  notify:
+    - Start multipath
+
+- name: Change iqn
+  lineinfile:
+    path: /etc/iscsi/initiatorname.iscsi
+    regexp: '^InitiatorName=.*'
+    line: 'InitiatorName=iqn.2022-05.ru.otus:{{ inventory_hostname }}'
+
+- name: Iscsiadm
+  shell: |
+    iscsiadm -m discovery -t st -p iscsi-0
+    iscsiadm -m node -l -T iqn.2022-05.ru.otus:storage.target00
+
+- name: Iscsid start
+  service:
+    name: iscsid
+    state: started

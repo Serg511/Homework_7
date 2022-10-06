@@ -1,0 +1,13 @@
+---
+- name: Restart corosync
+  service:
+    name: "corosync"
+    state: "restarted"
+  become: true
+
+- name: Restart pacemaker
+  service:
+    name: "pacemaker"
+    sleep: 10
+    state: "restarted"
+  become: true

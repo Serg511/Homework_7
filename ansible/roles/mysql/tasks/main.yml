@@ -1,0 +1,46 @@
+- name: Install MySQL repo
+  yum: name=https://repo.mysql.com/mysql80-community-release-el7-3.noarch.rpm
+
+- name: Import GPG key
+  rpm_key:
+    key: https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+    state: present
+
+- name: Install packages
+  yum: 
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - mysql-community-server
+    - mysql-shell
+
+- name: Setenforce 0
+  command: setenforce 0
+
+- name: Put SELinux in permissive mode, logging actions that would be blocked.
+  selinux:
+    policy: targeted
+    state: permissive
+
+- name: Enable mysql
+  systemd:
+    name: mysqld
+    enabled: yes
+    state: started
+
+- name: Set mysql root passwd
+  become: true
+  shell: mysql -u root --password=$(grep "temporary" /var/log/mysqld.log|cut -d " " -f 13) --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '123qweASD+';" > /dev/null 2>&1
+    
+
+- name: Configure mysql
+  become: true
+  shell: mysql -u root --password="123qweASD+" -e "{{ item }}"
+  with_items:
+   - "CREATE DATABASE wordpress;"
+  #- "CREATE USER 'wordpressuser'@'%' IDENTIFIED BY '123qweASD-';"
+  #  - "GRANT ALL PRIVILEGES ON wordpress.* TO 'wordpressuser'@'%' IDENTIFIED BY '123qweASD-';"
+   - "CREATE USER 'wordpressuser'@'%' identified with mysql_native_password by '123qweASD-';"
+   - "GRANT ALL ON wordpress.* TO 'wordpressuser'@'%';"
+   - "FLUSH PRIVILEGES;"

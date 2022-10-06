@@ -1,0 +1,62 @@
+- name: Install packages
+  yum:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - epel-release
+    - nginx
+    - keepalived  
+
+- name: Updating net.ipv4.ip_nonlocal_bind parameter
+  shell: "{{ item }}"
+  loop:
+    - "sysctl net.ipv4.ip_nonlocal_bind=1"
+
+- name: Updating net.ipv4.ip_forward parameter
+  shell: "{{ item }}"
+  loop:
+    - "sysctl net.ipv4.ip_forward=1"
+
+- name: Updating sysctl parameters
+  shell: "{{ item }}"
+  loop:
+    - "sysctl -p"
+
+- name: Copy kepalived.conf with owner and permissions
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Restart keepalived
+
+
+- name: Configure nginx load_balancer
+  copy:
+    src: load_balancer.conf
+    dest: /etc/nginx/conf.d/load_balancer.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Configure nginx
+  copy:
+    src: nginx.conf
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Restart nginx
+
+- name: Enable nginx and keepalived
+  systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop:
+    - nginx
+    - keepalived

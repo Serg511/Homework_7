@@ -1,0 +1,43 @@
+- name: Install openjdk
+  yum:
+    name: java-1.8.0-openjdk
+    state: present
+
+- name: Copy rpm file Elasticsearch to server
+  copy:
+    src: elasticsearch-8.4.2-x86_64.rpm
+    dest: /tmp/elasticsearch-8.4.2-x86_64.rpm
+
+- name: Copy rpm file Kibana to server
+  copy:
+    src: kibana-8.4.2-x86_64.rpm
+    dest: /tmp/kibana-8.4.2-x86_64.rpm
+
+- name: Copy rpm file Logstash to server
+  copy:
+    src: logstash-8.4.2-x86_64.rpm
+    dest: /tmp/logstash-8.4.2-x86_64.rpm
+
+- name: Install Elasticsearch, Kibana, Logstash
+  yum: name={{ item }}
+  with_items:
+    - /tmp/elasticsearch-8.4.2-x86_64.rpm
+    - /tmp/kibana-8.4.2-x86_64.rpm
+    - /tmp/logstash-8.4.2-x86_64.rpm
+
+- name: Copy config Kibana
+  copy: 
+    src: kibana.yml 
+    dest: /etc/kibana/kibana.yml
+
+- name: Copy config Logstash
+  copy: 
+    src: pipeline.conf
+    dest: /etc/logstash/conf.d/pipeline.conf
+
+- name: Start ELK
+  systemd: name="{{ item }}" enabled=yes state=started
+  loop:
+    - elasticsearch
+    - kibana
+    - logstash

@@ -1,0 +1,25 @@
+filebeat.inputs:
+- type: log
+  enabled: true
+  paths:
+    - /mnt/gfs2/WP/wordpress/wp-content/*.log
+  tags: ["wordpress"]
+  fields:
+    logs: error log wordpress
+    kafka_topic: "wordpress"
+- type: log
+  enabled: true
+  paths:
+    - /var/log/nginx/*.log
+  tags: ["nginx"]
+  fields:
+    logs: error and access log nginx
+    kafka_topic: "nginx"
+
+filebeat.config.modules:
+  # Glob pattern for configuration loading
+  path: ${path.config}/modules.d/*.yml
+
+output.kafka:
+  hosts: ["kafka-0:9092"]
+  topic: '%{[fields.kafka_topic]}'
